@@ -1,0 +1,57 @@
+// Call like this: java -jar <JAR-File-Name>.jar <Listen-Port>
+// Example: java -jar UdpServer.jar 8123
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
+public class UdpServer {
+	public static int port;
+	private static String OS = System.getProperty("os.name").toLowerCase();
+	private static DatagramSocket serverSocket;
+
+	public static void main(String[] args) throws Exception {
+		port = Integer.parseInt(args[0]);
+
+		// Start Logging the data
+		Logger logger = Logger.getLogger("MyLog");
+		try {
+			FileHandler fh = new FileHandler("UdpServerLogFile.log");
+			logger.addHandler(fh);
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
+
+			logger.info(OS);
+			logger.info("Begining: ");
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		serverSocket = new DatagramSocket(port);
+		byte[] sendData = new byte['?'];
+		for (;;) {
+			byte[] receiveData = new byte['?'];
+			DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+			serverSocket.receive(receivePacket);
+			String sentence = "";
+			sentence = new String(receivePacket.getData()).trim();
+			System.out.println("RECEIVED: " + sentence);
+			InetAddress IPAddress = receivePacket.getAddress();
+			int port = receivePacket.getPort();
+			String capitalizedSentence = sentence.toUpperCase();
+			sendData = capitalizedSentence.getBytes();
+			DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+			logger.info("IP: " + IPAddress + "    Port: " + port + "    Data: " + sentence);
+
+			serverSocket.send(sendPacket);
+			Thread.sleep(500L);
+		}
+	}
+
+}
